@@ -1,15 +1,14 @@
-package com.example.weatherappk
+package com.example.weatherappk.ui.activities
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.text.format.DateFormat
-import android.util.Log
 import android.view.View
-import android.widget.Toast
 import com.example.weaderappk.Data.net.DarkSkyClient
 import com.example.weatherappk.Data.Model.Currently
 import com.example.weatherappk.Data.Model.Weather
+import com.example.weatherappk.R
+import com.example.weatherappk.ui.convertTime
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.design.indefiniteSnackbar
 import retrofit2.Call
@@ -21,6 +20,9 @@ import kotlin.math.roundToInt
 
 class MainActivity : AppCompatActivity() {
 
+    companion object{
+        const val HOURLY_SUMMARY = "HOURLY_SUMMARY"
+    }
     var hourlySummary: List<String>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,25 +73,24 @@ class MainActivity : AppCompatActivity() {
     fun startHourlyActivity(view: View){
         val  intent = Intent(this, HourlyAvtivity::class.java)
         val array = hourlySummary?.toTypedArray()
-        intent.putExtra("HOURLY_SUMMARY", array)
+        intent.putExtra(HOURLY_SUMMARY, array)
         startActivity(intent)
     }
     private fun displayErrorMessage(){
-        mainLayout.indefiniteSnackbar("Network Error. Try Again?", "Ok"){
+        mainLayout.indefiniteSnackbar(getString(R.string.network), "Ok"){
             getWeather()
         }
     }
 
     private fun setUpWidgets(currently: Currently?){
         textViewPronostico.text = currently?.summary
-        textViewTemp.text = "${currently?.temperature?.roundToInt()}°F"
-        textViewViento.text = "${currently?.precipProbability?.roundToInt()}%"
+        textViewTemp.text = "${currently?.temperature?.roundToInt()}"
+        textViewViento.text = getString(R.string.temperature,currently?.precipProbability?.roundToInt())
         imageView.setImageResource( getWeatherIcon(currently?.icon ?: "clear-day"))
-        textViewFecha.text = getDateTime()?.capitalize() ?: "No Data"
+        textViewFecha.text = getDateTime()?.capitalize() ?: getString(R.string.NoData)
     }
     private fun getDateTime(): String?{
         return try {
-
             val simpleDateFormat = SimpleDateFormat("MMMM d", Locale.getDefault())
             val date = Calendar.getInstance().time
             simpleDateFormat.format(date)
@@ -116,12 +117,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun convertTime(time: Int, format: String): String{
-        val cal = Calendar.getInstance(Locale.getDefault())
-        cal.timeInMillis = (time*1000L)
-        val date = DateFormat.format(format, cal).toString().capitalize()
-        return date
-    }
+
 
 
 }
