@@ -3,6 +3,7 @@ package com.example.weatherappk
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.text.format.DateFormat
 import android.util.Log
 import android.view.View
 import android.widget.Toast
@@ -20,6 +21,8 @@ import kotlin.math.roundToInt
 
 class MainActivity : AppCompatActivity() {
 
+    var hourlySummary: List<String>? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -34,9 +37,15 @@ class MainActivity : AppCompatActivity() {
                 displayErrorMessage()
             }
             override fun onResponse(call: Call<Weather>, response: Response<Weather>) {
-                setUpWidgets(response.body()?.currently)
                 displayUI(true)
                 displayProgressBar(false)
+                if(response.isSuccessful){
+                    hourlySummary =
+                        response.body()?.hourly?.data?.map{"${convertTime(it.time,"MMM dd, hh:mm")} ${it.summary}"}
+                    setUpWidgets(response.body()?.currently)
+                }else{
+                    displayErrorMessage()
+                }
             }
         })
     }
@@ -56,12 +65,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun startDailyActivity(view: View){
-        val  intent = Intent(this, DailyActivity::class.java);
-        startActivity(intent);
+        val  intent = Intent(this, DailyActivity::class.java)
+        startActivity(intent)
     }
     fun startHourlyActivity(view: View){
         val  intent = Intent(this, HourlyAvtivity::class.java)
-        startActivity(intent);
+        val array = hourlySummary?.toTypedArray()
+        intent.putExtra("HOURLY_SUMMARY", array)
+        startActivity(intent)
     }
     private fun displayErrorMessage(){
         mainLayout.indefiniteSnackbar("Network Error. Try Again?", "Ok"){
@@ -103,6 +114,13 @@ class MainActivity : AppCompatActivity() {
             "partly-cloudy-night" -> R.drawable.partlycloudynight
             else -> R.drawable.soleado
         }
+    }
+
+    fun convertTime(time: Int, format: String): String{
+        val cal = Calendar.getInstance(Locale.getDefault())
+        cal.timeInMillis = (time*1000L)
+        val date = DateFormat.format(format, cal).toString().capitalize()
+        return date
     }
 
 
